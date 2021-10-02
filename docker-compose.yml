@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:13.4
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: poc_authorizations
+      POSTGRES_USER: poc_admin
+      POSTGRES_PASSWORD: poc_admin_pwd
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+
+volumes:
+  pg_data:
