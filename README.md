@@ -1,8 +1,8 @@
 # Debezium Engine POC
 
-POC project for studying CDC with a Spring Boot application listening on PostgreSQL data changes (via `pgoutput` plugin).
+POC project for studying CDC with a **Spring Boot** application listening on PostgreSQL data changes (via `pgoutput` plugin).
 
-Docker compose starts a PostgreSQL server with proper configuration for enabling CDC (aka **publications**)
+*Docker compose* starts a PostgreSQL server with proper configuration for enabling CDC (aka **publications**)
 
 Some references:
 
