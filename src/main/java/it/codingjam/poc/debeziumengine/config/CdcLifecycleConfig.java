@@ -1,6 +1,5 @@
 package it.codingjam.poc.debeziumengine.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.codingjam.poc.debeziumengine.models.CdcEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
