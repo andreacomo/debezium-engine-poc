@@ -8,9 +8,9 @@ import java.util.Map;
 
 public class CdcEvent {
 
-    private final ChangeEvent<String, String> changeEvent;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ChangeEvent<String, String> changeEvent;
 
     private Map<String, Object> key;
 
@@ -28,7 +28,7 @@ public class CdcEvent {
     @SneakyThrows
     public Map<String, Object> key() {
         if (key == null) {
-            key = objectMapper.readValue(changeEvent.key(), Map.class);
+            key = OBJECT_MAPPER.readValue(changeEvent.key(), Map.class);
         }
         return key;
     }
@@ -36,7 +36,7 @@ public class CdcEvent {
     @SneakyThrows
     public Map<String, Object> value() {
         if (value == null) {
-            value = objectMapper.readValue(changeEvent.value(), Map.class);
+            value = OBJECT_MAPPER.readValue(changeEvent.value(), Map.class);
         }
         return value;
     }

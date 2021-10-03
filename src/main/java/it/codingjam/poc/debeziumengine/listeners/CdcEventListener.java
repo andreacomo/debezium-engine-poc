@@ -11,8 +11,9 @@ public class CdcEventListener {
 
     @EventListener
     public void onChange(CdcEvent event) {
-        log.info(event.key().toString());
-        log.info(event.value().toString());
+        log.info("Receiving changes from {}", event.destination());
+        log.info("Event KEY: {} ", event.key());
+        log.info("Event VALUE: {}", event.value());
 
         // throw new RuntimeException("Ops!!");
     }
