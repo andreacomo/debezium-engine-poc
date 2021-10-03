@@ -1,19 +1,18 @@
-package it.codingjam.poc.debeziumengine.services;
+package it.codingjam.poc.debeziumengine.config;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-@Component
 @Slf4j
 public class CdcEngine {
 
@@ -21,23 +20,41 @@ public class CdcEngine {
 
     private DebeziumEngine<ChangeEvent<String, String>> engine;
 
-    @PostConstruct
-    void init() {
-        var properties = readProperties("postgres.properties");
+    private static final int RETRY_SEC_ON_CONSUMER_ERROR = 20;
+
+    public CdcEngine(String configPropertiesName,
+                     Consumer<ChangeEvent<String, String>> consumer) {
+        var properties = readProperties(configPropertiesName);
+        init(consumer, properties);
+    }
+
+    private void init(Consumer<ChangeEvent<String, String>> consumer, Properties properties) {
         engine = DebeziumEngine.create(Json.class)
                 .using(properties)
                 .using(newConnectorCallback())
                 .using((success, message, error) -> {
-                    log.info(message);
-                    executor.shutdown();
+                    if (success) {
+                        log.info(message);
+                        executor.shutdown();
+                    } else {
+                        log.error(error.getMessage(), error);
+                        retry(consumer, properties);
+                    }
                 })
-                .notifying(event -> log.info(event.toString()))
+                .notifying(consumer)
                 .build();
+
         executor.execute(engine);
     }
 
-    @PreDestroy
-    void beforeShutdown() throws IOException {
+    @SneakyThrows
+    private void retry(Consumer<ChangeEvent<String, String>> consumer, Properties properties) {
+        log.info("Waiting {} seconds and retry...", RETRY_SEC_ON_CONSUMER_ERROR);
+        TimeUnit.SECONDS.sleep(RETRY_SEC_ON_CONSUMER_ERROR);
+        init(consumer, properties);
+    }
+
+    void shutdown() throws IOException {
         engine.close();
     }
 
@@ -45,26 +62,22 @@ public class CdcEngine {
         return new DebeziumEngine.ConnectorCallback() {
             @Override
             public void connectorStarted() {
-                DebeziumEngine.ConnectorCallback.super.connectorStarted();
-                log.info("connectorStarted");
+                log.info("Connector Started");
             }
 
             @Override
             public void connectorStopped() {
-                DebeziumEngine.ConnectorCallback.super.connectorStopped();
-                log.info("connectorStopped");
+                log.info("Connector Stopped");
             }
 
             @Override
             public void taskStarted() {
-                DebeziumEngine.ConnectorCallback.super.taskStarted();
-                log.info("taskStarted");
+                log.info("Task Started");
             }
 
             @Override
             public void taskStopped() {
-                DebeziumEngine.ConnectorCallback.super.taskStopped();
-                log.info("taskStarted");
+                log.info("Task Stopped");
             }
         };
     }
